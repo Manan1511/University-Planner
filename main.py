@@ -192,6 +192,17 @@ def main(page: ft.Page):
     page.padding = 0
     page.window_width = 390
     page.window_height = 844
+    
+    # Custom Scrollbar Theme
+    page.theme = ft.Theme(
+        scrollbar_theme=ft.ScrollbarTheme(
+            thumb_visibility=True,
+            thumb_color=ft.Colors.GREY_600,
+            thickness=8,
+            radius=4,
+            interactive=True,
+        )
+    )
 
     subjects = []
     stored_data = page.client_storage.get("subjects")
@@ -313,7 +324,17 @@ def main(page: ft.Page):
     # 3. Add Assignment
     assign_title = ft.TextField(label="Title")
     assign_sub_dd = ft.Dropdown(label="Subject", expand=True)
-    assign_date_field = ft.TextField(label="Deadline", read_only=True, expand=True)
+    
+    def open_date_picker(e):
+        page.open(date_picker)
+
+    assign_date_field = ft.TextField(
+        label="Deadline", 
+        read_only=True, 
+        expand=True, 
+        suffix_icon=ft.Icons.CALENDAR_MONTH,
+        on_click=open_date_picker
+    )
 
     def on_date_change(e):
         if date_picker.value:
@@ -336,7 +357,7 @@ def main(page: ft.Page):
         content=ft.Column([
             assign_title,
             ft.Row([assign_sub_dd]),
-            ft.Row([assign_date_field, ft.IconButton(icon=ft.Icons.CALENDAR_MONTH, on_click=lambda e: page.open(date_picker))])
+            ft.Row([assign_date_field])
         ], height=240, spacing=20),
         actions=[ft.TextButton("Save", on_click=save_assignment)]
     )
@@ -357,27 +378,34 @@ def main(page: ft.Page):
 
     def build_home_view():
         today_name = datetime.datetime.now().strftime("%A")
-        today_classes_ctls = []
-        has_classes = False
+        today_data = [] # (time_val, subject_obj)
+        
         for sub in subjects:
             for slot in sub.schedule:
                 if slot["day"] == today_name:
-                    has_classes = True
-                    # Simplified time display from "08:00 - 08:50 (Theory)" to "08:00"
-                    time_short = slot["time"].split(' ')[0]
-                    today_classes_ctls.append(
-                        ft.Container(
-                            content=ft.Column([
-                                ft.Text(time_short, weight=ft.FontWeight.BOLD),
-                                ft.Text(sub.code, size=12, color=ft.Colors.GREY),
-                                ft.Text(sub.name, size=12, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                            ]),
-                            bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, width=100, height=80,
-                            shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK12)
-                        )
-                    )
+                   today_data.append((slot["time"], sub))
         
-        today_disp.controls = [ft.Text("No classes today! 🎉", color=ft.Colors.GREY)] if not has_classes else [ft.Row(today_classes_ctls, scroll=ft.ScrollMode.HIDDEN)]
+        # Sort by time
+        today_data.sort(key=lambda x: x[0])
+
+        today_classes_ctls = []
+        if today_data:
+            for time_str, sub in today_data:
+                # Simplified time display from "08:00 - 08:50 (Theory)" to "08:00"
+                time_short = time_str.split(' ')[0]
+                today_classes_ctls.append(
+                    ft.Container(
+                        content=ft.Column([
+                            ft.Text(time_short, weight=ft.FontWeight.BOLD),
+                            ft.Text(sub.code, size=12, color=ft.Colors.GREY),
+                            ft.Text(sub.name, size=12, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS),
+                        ]),
+                        bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, width=160, height=90,
+                        shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK12)
+                    )
+                )
+        
+        today_disp.controls = [ft.Text("No classes today! 🎉", color=ft.Colors.GREY)] if not today_classes_ctls else [ft.Row(today_classes_ctls, scroll=ft.ScrollMode.AUTO)]
 
         all_assigns = []
         for s in subjects:
@@ -426,7 +454,7 @@ def main(page: ft.Page):
 
     # VIEW 2: TIMETABLE
     tt_tabs = ft.Tabs(selected_index=0, tabs=[ft.Tab(text=d[:3]) for d in DAYS], on_change=lambda e: update_tt_grid())
-    tt_list = ft.Column()
+    tt_list = ft.Column(scroll=ft.ScrollMode.AUTO)
 
     def update_tt_grid():
         day_idx = tt_tabs.selected_index
