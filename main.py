@@ -184,6 +184,120 @@ class SlotSelector(ft.Container):
             ctl.bgcolor = ft.Colors.BLUE_400 if is_sel else ft.Colors.GREY_100
         # No implicit update here, done by parent opening dialog usually
 
+# --- Weekly Visual Grid Component (Read-Only) ---
+class WeeklyVisualGrid(ft.Container):
+    def __init__(self, subjects):
+        self.subjects = subjects
+        
+        # Prepare Data: Map "Day-Time" -> Subject Code
+        self.schedule_map = {}
+        for sub in subjects:
+            for slot in sub.schedule:
+                key = f"{slot['day']}_{slot['time']}"
+                self.schedule_map[key] = sub.code
+        
+# --- Visual Grid Columns Schema ---
+# Maps a visual column to its corresponding Theory and Lab time strings.
+VISUAL_COLS = [
+    {"label": "08:00", "t": "08:00 - 08:50 (Theory)", "l": "08:00 - 08:50 (Lab)"},
+    {"label": "09:00", "t": "09:00 - 09:50 (Theory)", "l": "08:51 - 09:40 (Lab)"},
+    {"label": "10:00", "t": "10:00 - 10:50 (Theory)", "l": "09:51 - 10:40 (Lab)"},
+    {"label": "11:00", "t": "11:00 - 11:50 (Theory)", "l": "10:41 - 11:30 (Lab)"},
+    {"label": "12:00", "t": "12:00 - 12:50 (Theory)", "l": "11:40 - 12:30 (Lab)"},
+    {"label": "Lunch", "t": None, "l": "12:31 - 13:20 (Lab)"}, # 12:31 Lab slot (L6)
+    {"label": "14:00", "t": "14:00 - 14:50 (Theory)", "l": "14:00 - 14:50 (Lab)"},
+    {"label": "15:00", "t": "15:00 - 15:50 (Theory)", "l": "14:51 - 15:40 (Lab)"},
+    {"label": "16:00", "t": "16:00 - 16:50 (Theory)", "l": "15:51 - 16:40 (Lab)"},
+    {"label": "17:00", "t": "17:00 - 17:50 (Theory)", "l": "16:41 - 17:30 (Lab)"},
+    {"label": "18:00", "t": "18:00 - 18:50 (Theory)", "l": "17:40 - 18:30 (Lab)"},
+    {"label": "19:00", "t": "19:00 - 19:50 (Theory)", "l": "18:31 - 19:20 (Lab)"},
+]
+
+# --- Weekly Visual Grid Component (Read-Only) ---
+class WeeklyVisualGrid(ft.Container):
+    def __init__(self, subjects):
+        self.subjects = subjects
+        
+        # Prepare Data: Map "Day-Time" -> Subject Code
+        self.schedule_map = {}
+        for sub in subjects:
+            for slot in sub.schedule:
+                key = f"{slot['day']}_{slot['time']}"
+                self.schedule_map[key] = sub.code
+        
+        # Build Grid - Dual Header Logic
+        
+        # 1. Theory Header
+        th_header_ctls = [ft.Container(width=60, content=ft.Text("Theory", size=10, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY), alignment=ft.alignment.center_left, padding=ft.padding.only(left=5))]
+        for col in VISUAL_COLS:
+            # Extract start time from string "09:00 - 09:50 (Theory)" -> "09:00"
+            t_str = col["t"].split(' ')[0] if col["t"] else "-"
+            th_header_ctls.append(ft.Container(width=60, content=ft.Text(t_str, size=9, weight=ft.FontWeight.BOLD), alignment=ft.alignment.center))
+            
+        # 2. Lab Header
+        lb_header_ctls = [ft.Container(width=60, content=ft.Text("Lab", size=10, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY), alignment=ft.alignment.center_left, padding=ft.padding.only(left=5))]
+        for col in VISUAL_COLS:
+            l_str = col["l"].split(' ')[0] if col["l"] else "-"
+            lb_header_ctls.append(ft.Container(width=60, content=ft.Text(l_str, size=9, weight=ft.FontWeight.BOLD), alignment=ft.alignment.center))
+
+        rows = [
+            ft.Row(th_header_ctls, spacing=2),
+            ft.Row(lb_header_ctls, spacing=2),
+            ft.Container(height=1, bgcolor=ft.Colors.GREY_300, margin=ft.margin.symmetric(vertical=5)) # Separator
+        ]
+
+        for day in DAYS:
+            # Theory Row
+            t_row_ctls = [ft.Container(width=60, content=ft.Text(f"{day[:3]} Th", size=10, weight=ft.FontWeight.BOLD))]
+            for col in VISUAL_COLS:
+                time_val = col["t"]
+                code = self.schedule_map.get(f"{day}_{time_val}") if time_val else None
+                
+                is_occupied = code is not None
+                bg = "#3D5CFF" if is_occupied else ft.Colors.GREY_100
+                txt_col = ft.Colors.WHITE if is_occupied else ft.Colors.TRANSPARENT
+                txt_val = code if code else "Class"
+                txt = txt_val if is_occupied else ""
+                
+                if time_val is None: # No Theory slot in this column (e.g. Lunch)
+                     t_row_ctls.append(ft.Container(width=60, height=30, bgcolor=ft.Colors.TRANSPARENT))
+                else:
+                    t_row_ctls.append(
+                        ft.Container(width=60, height=30, bgcolor=bg, border_radius=4, content=ft.Text(txt, size=8, color=txt_col), alignment=ft.alignment.center)
+                    )
+            rows.append(ft.Row(t_row_ctls, spacing=2))
+
+            # Lab Row
+            l_row_ctls = [ft.Container(width=60, content=ft.Text(f"{day[:3]} Lab", size=10, weight=ft.FontWeight.BOLD))]
+            for col in VISUAL_COLS:
+                time_val = col["l"]
+                code = self.schedule_map.get(f"{day}_{time_val}") if time_val else None
+                
+                is_occupied = code is not None
+                bg = "#3D5CFF" if is_occupied else ft.Colors.GREY_100
+                txt_col = ft.Colors.WHITE if is_occupied else ft.Colors.TRANSPARENT
+                txt_val = code if code else "Class"
+                txt = txt_val if is_occupied else ""
+
+                if time_val is None:
+                    l_row_ctls.append(ft.Container(width=60, height=30, bgcolor=ft.Colors.TRANSPARENT))
+                else:
+                    l_row_ctls.append(
+                        ft.Container(width=60, height=30, bgcolor=bg, border_radius=4, content=ft.Text(txt, size=8, color=txt_col), alignment=ft.alignment.center)
+                    )
+            rows.append(ft.Row(l_row_ctls, spacing=2))
+            
+            rows.append(ft.Container(height=1, bgcolor=ft.Colors.GREY_200))
+            
+            rows.append(ft.Container(height=1, bgcolor=ft.Colors.GREY_200))
+
+        super().__init__(
+            content=ft.Column(rows, scroll=ft.ScrollMode.AUTO),
+            height=500, # Increased height
+            # Removed width constraint to allow full horizontal scrolling
+            border=ft.border.all(1, ft.Colors.GREY_800), border_radius=10, padding=10
+        )
+
 # --- Main App ---
 
 def main(page: ft.Page):
@@ -225,6 +339,15 @@ def main(page: ft.Page):
             edit_subject_ref.schedule = slot_selector.selected_slots.copy()
             save_data()
             page.close(sched_dialog)
+
+    def open_visual_timetable(e):
+        grid = WeeklyVisualGrid(subjects)
+        dialog = ft.AlertDialog(
+            title=ft.Text("Visual Timetable"),
+            content=ft.Container(content=ft.Row([grid], scroll=ft.ScrollMode.ALWAYS), width=350, height=450),
+            actions=[ft.TextButton("Close", on_click=lambda e: page.close(dialog))]
+        )
+        page.open(dialog)
 
     sched_dialog = ft.AlertDialog(
         title=ft.Text("Select Class Times"),
@@ -454,6 +577,12 @@ def main(page: ft.Page):
 
     # VIEW 2: TIMETABLE
     tt_tabs = ft.Tabs(selected_index=0, tabs=[ft.Tab(text=d[:3]) for d in DAYS], on_change=lambda e: update_tt_grid())
+    
+    tt_action_row = ft.Row([
+        ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD),
+        ft.IconButton(ft.Icons.GRID_VIEW, on_click=open_visual_timetable, tooltip="Visual View")
+    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+    
     tt_list = ft.Column(scroll=ft.ScrollMode.AUTO)
 
     def update_tt_grid():
@@ -487,7 +616,7 @@ def main(page: ft.Page):
     def build_timetable_view():
         return ft.Container(
             content=ft.Column([
-                ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD),
+                tt_action_row,
                 tt_tabs,
                 ft.Container(content=tt_list, expand=True, padding=ft.padding.only(top=20))
             ]),
