@@ -550,7 +550,7 @@ def main(page: ft.Page):
                         content=ft.Row([
                             ft.Icon(ft.Icons.ASSIGNMENT, color=ft.Colors.ORANGE),
                             ft.Column([ft.Text(a["title"], weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK), ft.Text(f"{sub.name} • {a['deadline']}", size=12, color=ft.Colors.BLACK)]),
-                            ft.IconButton(icon=ft.Icons.CHECK_CIRCLE_OUTLINE, on_click=lambda e, s=sub, assign=a: complete_assignment(s, assign))
+                            ft.IconButton(icon=ft.Icons.CHECK_CIRCLE_OUTLINE, icon_color="#3a58e8", on_click=lambda e, s=sub, assign=a: complete_assignment(s, assign))
                         ]),
                         bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, margin=ft.margin.only(bottom=5)
                     )
