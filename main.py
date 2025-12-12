@@ -523,8 +523,8 @@ def main(page: ft.Page):
                             ft.Text(time_short, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
                             ft.Text(sub.code, size=12, color=ft.Colors.BLACK),
                             ft.Text(sub.name, size=12, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS, color=ft.Colors.BLACK),
-                        ]),
-                        bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, width=160, height=90,
+                        ], spacing=2),
+                        bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, width=160, height=110,
                         shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK12)
                     )
                 )
@@ -641,8 +641,8 @@ def main(page: ft.Page):
     
     body = ft.Container(expand=True)
     
-    fab_add_subject = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: page.open(add_dialog), bgcolor="#3D5CFF")
-    fab_add_assign = ft.FloatingActionButton(icon=ft.Icons.ADD_TASK, on_click=open_assign_dialog, bgcolor=ft.Colors.ORANGE)
+    fab_add_subject = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: page.open(add_dialog), bgcolor="#3D5CFF", foreground_color=ft.Colors.WHITE)
+    fab_add_assign = ft.FloatingActionButton(icon=ft.Icons.ADD_TASK, on_click=open_assign_dialog, bgcolor=ft.Colors.ORANGE, foreground_color=ft.Colors.WHITE)
 
     def refresh_all_views():
         if nav.selected_index == 0:
