@@ -520,9 +520,9 @@ def main(page: ft.Page):
                 today_classes_ctls.append(
                     ft.Container(
                         content=ft.Column([
-                            ft.Text(time_short, weight=ft.FontWeight.BOLD),
-                            ft.Text(sub.code, size=12, color=ft.Colors.GREY),
-                            ft.Text(sub.name, size=12, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Text(time_short, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+                            ft.Text(sub.code, size=12, color=ft.Colors.BLACK),
+                            ft.Text(sub.name, size=12, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS, color=ft.Colors.BLACK),
                         ]),
                         bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, width=160, height=90,
                         shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK12)
@@ -549,7 +549,7 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Row([
                             ft.Icon(ft.Icons.ASSIGNMENT, color=ft.Colors.ORANGE),
-                            ft.Column([ft.Text(a["title"], weight=ft.FontWeight.BOLD), ft.Text(f"{sub.name} • {a['deadline']}", size=12, color=ft.Colors.GREY)]),
+                            ft.Column([ft.Text(a["title"], weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK), ft.Text(f"{sub.name} • {a['deadline']}", size=12, color=ft.Colors.BLACK)]),
                             ft.IconButton(icon=ft.Icons.CHECK_CIRCLE_OUTLINE, on_click=lambda e, s=sub, assign=a: complete_assignment(s, assign))
                         ]),
                         bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, margin=ft.margin.only(bottom=5)
