@@ -414,7 +414,7 @@ def main(page: ft.Page):
             ft.TextButton("Absent", on_click=lambda e: on_attendance_change(0, 1), style=ft.ButtonStyle(color=ft.Colors.RED)),
             ft.TextButton("Edit Details", on_click=open_details_dialog),
             ft.TextButton("Edit Schedule", on_click=open_sched_dialog),
-            ft.TextButton("Delete", on_click=delete_sub, style=ft.ButtonStyle(color=ft.Colors.GREY)),
+            ft.TextButton("Delete", on_click=delete_sub, style=ft.ButtonStyle(color=ft.Colors.RED)),
         ]
     )
 
@@ -538,7 +538,7 @@ def main(page: ft.Page):
                     all_assigns.append((s, a))
         
         # REMOVED the local + button here as requested
-        upcoming_header = ft.Text("Upcoming Work", size=18, weight=ft.FontWeight.BOLD)
+        upcoming_header = ft.Text("Upcoming Work", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK)
         
         if not all_assigns:
             upcoming_disp.controls = [ft.Text("No pending work.", color=ft.Colors.GREY)]
@@ -561,7 +561,7 @@ def main(page: ft.Page):
             content=ft.Column(
                 controls=[
                     hero_card,
-                    ft.Text("Today's Classes", size=18, weight=ft.FontWeight.BOLD),
+                    ft.Text("Today's Classes", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
                     today_disp,
                     upcoming_header,
                     upcoming_disp
@@ -580,7 +580,7 @@ def main(page: ft.Page):
     tt_tabs = ft.Tabs(selected_index=0, tabs=[ft.Tab(text=d[:3]) for d in DAYS], on_change=lambda e: update_tt_grid())
     
     tt_action_row = ft.Row([
-        ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD),
+        ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
         ft.IconButton(ft.Icons.GRID_VIEW, on_click=open_visual_timetable, tooltip="Visual View")
     ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
     
@@ -631,7 +631,7 @@ def main(page: ft.Page):
         sub_list_col.controls = [SubjectCard(s, open_edit) for s in subjects]
         return ft.Container(
             content=ft.Column([
-                ft.Text("All Subjects", size=24, weight=ft.FontWeight.BOLD),
+                ft.Text("All Subjects", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
                 sub_list_col
             ]),
             padding=20, expand=True
