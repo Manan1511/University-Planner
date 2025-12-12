@@ -157,7 +157,7 @@ class SlotSelector(ft.Container):
             rows.append(ft.Row(row_ctls))
 
         super().__init__(
-            content=ft.Column(rows, scroll=ft.ScrollMode.AUTO, height=300),
+            content=ft.Row([ft.Column(rows, scroll=ft.ScrollMode.AUTO, height=300)], scroll=ft.ScrollMode.AUTO, alignment=ft.alignment.top_left),
             border=ft.border.all(1, ft.Colors.GREY_200), border_radius=8, padding=10
         )
 
@@ -308,10 +308,11 @@ def main(page: ft.Page):
     page.window_height = 844
     
     # Custom Scrollbar Theme
+    # Custom Scrollbar Theme
     page.theme = ft.Theme(
         scrollbar_theme=ft.ScrollbarTheme(
             thumb_visibility=True,
-            thumb_color=ft.Colors.GREY_600,
+            thumb_color=ft.Colors.GREY_400,
             thickness=8,
             radius=4,
             interactive=True,
