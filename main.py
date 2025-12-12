@@ -1,6 +1,7 @@
 import flet as ft
 import math
 import datetime
+import time
 
 # --- Constants ---
 GRID_TIME_SLOTS = [
@@ -543,16 +544,25 @@ def main(page: ft.Page):
         if not all_assigns:
             upcoming_disp.controls = [ft.Text("No pending work.", color=ft.Colors.GREY)]
         else:
+            # Sort by deadline (ascending) so older dates (potentially overdue) come first
+            all_assigns.sort(key=lambda x: x[1]['deadline'])
+            
+            today_str = str(datetime.date.today())
             upcoming_disp.controls = []
             for sub, a in all_assigns:
+                # Check for overdue
+                is_overdue = a['deadline'] < today_str
+                title_color = ft.Colors.RED if is_overdue else ft.Colors.BLACK
+                
                 upcoming_disp.controls.append(
                     ft.Container(
                         content=ft.Row([
                             ft.Icon(ft.Icons.ASSIGNMENT, color=ft.Colors.ORANGE),
-                            ft.Column([ft.Text(a["title"], weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK), ft.Text(f"{sub.name} • {a['deadline']}", size=12, color=ft.Colors.BLACK)]),
-                            ft.IconButton(icon=ft.Icons.CHECK_CIRCLE_OUTLINE, icon_color="#3a58e8", on_click=lambda e, s=sub, assign=a: complete_assignment(s, assign))
+                            ft.Column([ft.Text(a["title"], weight=ft.FontWeight.BOLD, color=title_color), ft.Text(f"{sub.name} • {a['deadline']}", size=12, color=ft.Colors.BLACK)]),
+                            ft.IconButton(icon=ft.Icons.CHECK_CIRCLE_OUTLINE, icon_color="#3a58e8", on_click=lambda e, s=sub, assign=a: complete_assignment(e, s, assign))
                         ]),
-                        bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, margin=ft.margin.only(bottom=5)
+                        bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, margin=ft.margin.only(bottom=5),
+                        animate_opacity=300, # Animation duration for opacity
                     )
                 )
         
@@ -571,7 +581,20 @@ def main(page: ft.Page):
             padding=20
         )
 
-    def complete_assignment(sub, assign):
+    def complete_assignment(e, sub, assign):
+        # 1. Animate Out
+        # The container is: IconButton -> Row -> Container
+        # e.control is IconButton
+        # e.control.parent is Row
+        # e.control.parent.parent is Container
+        container = e.control.parent.parent
+        container.opacity = 0
+        container.update()
+        
+        # 2. Wait for animation
+        time.sleep(0.3)
+        
+        # 3. Update Data & UI
         assign["completed"] = True
         refresh_all_views()
         page.update()
@@ -588,7 +611,16 @@ def main(page: ft.Page):
     
     tt_action_row = ft.Row([
         ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
-        ft.IconButton(ft.Icons.GRID_VIEW, on_click=open_visual_timetable, tooltip="Visual View")
+        ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.GRID_VIEW, color="#3a58e8", size=30),
+                ft.Text("Visual View", color="#3a58e8", size=16, weight=ft.FontWeight.BOLD)
+            ], spacing=5),
+            on_click=open_visual_timetable,
+            padding=10,
+            border_radius=8,
+            ink=True
+        )
     ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
     
     tt_list = ft.Column(scroll=ft.ScrollMode.AUTO)
@@ -657,9 +689,9 @@ def main(page: ft.Page):
             page.floating_action_button = fab_add_assign
         elif nav.selected_index == 1:
             body.content = build_timetable_view()
-            update_tt_grid()
             page.floating_action_button = None
-        elif nav.selected_index == 2:
+            update_tt_grid()
+        else:
             body.content = build_subjects_view()
             page.floating_action_button = fab_add_subject
         page.update()
@@ -668,18 +700,37 @@ def main(page: ft.Page):
         refresh_all_views()
 
     nav = ft.NavigationBar(
+        selected_index=0,
+        on_change=on_nav_change,
         destinations=[
-            ft.NavigationBarDestination(icon=ft.Icons.DASHBOARD_OUTLINED, selected_icon=ft.Icons.DASHBOARD, label="Home"),
-            ft.NavigationBarDestination(icon=ft.Icons.CALENDAR_MONTH_OUTLINED, selected_icon=ft.Icons.CALENDAR_MONTH, label="Timetable"),
-            ft.NavigationBarDestination(icon=ft.Icons.BOOK_OUTLINED, selected_icon=ft.Icons.BOOK, label="Subjects"),
-        ],
-        on_change=on_nav_change
+            ft.NavigationBarDestination(icon=ft.Icons.HOME, label="Home"),
+            ft.NavigationBarDestination(icon=ft.Icons.CALENDAR_MONTH, label="Timetable"),
+            ft.NavigationBarDestination(icon=ft.Icons.BOOK, label="Subjects"),
+        ]
     )
 
     page.add(body)
     page.navigation_bar = nav
     
     refresh_all_views()
+    
+    # --- DISCLAIMER DIALOG ---
+    disclaimer_dialog = ft.AlertDialog(
+        title=ft.Text("Welcome to Bunkinator", weight=ft.FontWeight.BOLD, color="#3a58e8"),
+        bgcolor=ft.Colors.WHITE,
+        content=ft.Column([
+            ft.Text("• Bunking is injurious to the degree", color=ft.Colors.RED_400, weight=ft.FontWeight.BOLD),
+            ft.Text("• None of the developers in the club promote or support bunking", color=ft.Colors.RED_400, weight=ft.FontWeight.BOLD),
+            ft.Text("• Bunking causes sem backs", color=ft.Colors.RED_400, weight=ft.FontWeight.BOLD),
+            ft.Text("• Proxies are injurious to the degree", color=ft.Colors.RED_400, weight=ft.FontWeight.BOLD),
+        ], height=120, tight=True, spacing=5),
+        actions=[
+            ft.TextButton("I Understand", on_click=lambda e: page.close(disclaimer_dialog), style=ft.ButtonStyle(color="#3a58e8"))
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+    )
+    
+    # Show disclaimer on startup
+    page.open(disclaimer_dialog)
 
-if __name__ == "__main__":
-    ft.app(target=main)
+ft.app(target=main)
