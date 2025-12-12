@@ -121,7 +121,7 @@ class SubjectCard(ft.Container):
                 ft.Container(width=5, bgcolor=status_color, border_radius=ft.border_radius.only(top_left=12, bottom_left=12)),
                 ft.Container(
                     content=ft.Column([
-                        ft.Row([ft.Text(self.subject.code, size=10, weight=ft.FontWeight.W_900, color=ft.Colors.GREY_500), ft.Text(f"{self.subject.percentage:.1f}%", size=10, color=ft.Colors.GREY_500)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        ft.Row([ft.Text(self.subject.code, size=10, weight=ft.FontWeight.W_900, color=ft.Colors.GREY_500), ft.Container(content=ft.Text(f"{self.subject.percentage:.1f}%", size=24, weight=ft.FontWeight.BOLD, color=status_color), padding=ft.padding.only(right=10))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                         ft.Text(self.subject.name, weight=ft.FontWeight.BOLD, size=16, color=ft.Colors.BLACK87),
                         ft.Text(self.subject.professor if self.subject.professor else "No Prof Info", size=12, color=ft.Colors.GREY_600),
                         ft.Text(self.subject.get_bunk_message(), color=ft.Colors.BLUE_GREY, size=12, italic=True)
@@ -301,7 +301,7 @@ class WeeklyVisualGrid(ft.Container):
 # --- Main App ---
 
 def main(page: ft.Page):
-    page.title = "Attendance Manager V3"
+    page.title = "Bunkinator 5000"
     page.bgcolor = "#F5F7FA"
     page.padding = 0
     page.window_width = 390
@@ -529,7 +529,7 @@ def main(page: ft.Page):
                     )
                 )
         
-        today_disp.controls = [ft.Text("No classes today! 🎉", color=ft.Colors.GREY)] if not today_classes_ctls else [ft.Row(today_classes_ctls, scroll=ft.ScrollMode.AUTO)]
+        today_disp.controls = [ft.Text("No classes today! 🎉", color=ft.Colors.GREY_700)] if not today_classes_ctls else [ft.Row(today_classes_ctls, scroll=ft.ScrollMode.AUTO)]
 
         all_assigns = []
         for s in subjects:
@@ -577,7 +577,14 @@ def main(page: ft.Page):
         page.update()
 
     # VIEW 2: TIMETABLE
-    tt_tabs = ft.Tabs(selected_index=0, tabs=[ft.Tab(text=d[:3]) for d in DAYS], on_change=lambda e: update_tt_grid())
+    tt_tabs = ft.Tabs(
+        selected_index=0, 
+        tabs=[ft.Tab(text=d[:3]) for d in DAYS], 
+        on_change=lambda e: update_tt_grid(),
+        label_color="#3a58e8",
+        unselected_label_color=ft.Colors.BLACK,
+        indicator_color="#3a58e8"
+    )
     
     tt_action_row = ft.Row([
         ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
@@ -604,9 +611,9 @@ def main(page: ft.Page):
                 tt_list.controls.append(
                     ft.Container(
                         content=ft.Row([
-                            ft.Text(time.split(' ')[0], weight=ft.FontWeight.BOLD, width=50),
+                            ft.Text(time.split(' ')[0], weight=ft.FontWeight.BOLD, width=50, color=ft.Colors.BLACK),
                             ft.VerticalDivider(width=10, color=ft.Colors.GREY_300),
-                            ft.Column([ft.Text(sub.name, weight=ft.FontWeight.BOLD), ft.Text(f"{sub.code} • {sub.professor}", size=12, color=ft.Colors.GREY)])
+                            ft.Column([ft.Text(sub.name, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK), ft.Text(f"{sub.code} • {sub.professor}", size=12, color=ft.Colors.GREY)])
                         ]),
                         bgcolor=ft.Colors.WHITE, padding=15, border_radius=10, margin=ft.margin.only(bottom=10),
                         shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK12)
