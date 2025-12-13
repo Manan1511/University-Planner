@@ -148,7 +148,15 @@ class SubjectCard(ft.Container):
                 ft.Container(width=5, bgcolor=status_color, border_radius=ft.border_radius.only(top_left=12, bottom_left=12)),
                 ft.Container(
                     content=ft.Column([
-                        ft.Row([ft.Text(self.subject.code, size=10, weight=ft.FontWeight.W_900, color=text_secondary), ft.Container(content=ft.Text(f"{self.subject.percentage:.1f}%", size=24, weight=ft.FontWeight.BOLD, color=status_color), padding=ft.padding.only(right=10))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        ft.Row([
+                            ft.Text(self.subject.code, size=10, weight=ft.FontWeight.W_900, color=text_secondary),
+                            ft.Container(
+                                content=ft.Text(f"{self.subject.percentage:.1f}%", size=24, weight=ft.FontWeight.BOLD, color=status_color),
+                                expand=True,
+                                alignment=ft.alignment.center
+                            ),
+                            ft.Icon(ft.Icons.MORE_VERT, color=text_secondary, size=24)
+                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                         ft.Text(self.subject.name, weight=ft.FontWeight.BOLD, size=16, color=text_primary),
                         ft.Text(self.subject.professor if self.subject.professor else "No Prof Info", size=12, color=text_secondary),
                         ft.Text(self.subject.get_bunk_message(), color=text_secondary, size=12, italic=True)
