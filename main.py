@@ -36,6 +36,23 @@ DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
 # --- Logic & Data Models ---
 
+# Global Theme Management
+IS_DARK_MODE = False
+
+def get_color(key):
+    is_dark = IS_DARK_MODE
+    colors = {
+        "bg": "#1A1C1E" if is_dark else "#F5F7FA",
+        "card": "#262A2D" if is_dark else ft.Colors.WHITE,
+        "text": ft.Colors.WHITE if is_dark else ft.Colors.BLACK,
+        "text_secondary": ft.Colors.GREY_400 if is_dark else ft.Colors.GREY_700,
+        "divider": ft.Colors.GREY_800 if is_dark else ft.Colors.GREY_200,
+        "icon": ft.Colors.WHITE if is_dark else ft.Colors.BLACK,
+        "slot_bg": ft.Colors.GREY_800 if is_dark else ft.Colors.GREY_100,
+        "shadow": ft.Colors.BLACK if is_dark else ft.Colors.BLUE_GREY_200,
+    }
+    return colors.get(key, ft.Colors.RED)
+
 class Subject:
     def __init__(self, name, attended=0, conducted=0, code="", professor="", schedule=None, assignments=None):
         self.name = name
@@ -86,7 +103,7 @@ class HeroCard(ft.Container):
             content=ft.Column([ft.Text("Safe Bunk Prediction", color=ft.Colors.WHITE70, size=14), self.status_text], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             gradient=ft.LinearGradient(begin=ft.alignment.top_left, end=ft.alignment.bottom_right, colors=["#3D5CFF", "#2C3E50"]),
             border_radius=20, padding=20, height=160, alignment=ft.alignment.center,
-            shadow=ft.BoxShadow(blur_radius=15, color=ft.Colors.BLUE_GREY_200, offset=ft.Offset(0, 10))
+            shadow=ft.BoxShadow(blur_radius=15, color=get_color("shadow"), offset=ft.Offset(0, 10))
         )
 
     def update_prediction(self, subjects):
@@ -108,29 +125,38 @@ class HeroCard(ft.Container):
         if warning_subject:
             needed = math.ceil(3 * warning_subject.conducted - 4 * warning_subject.attended)
             self.status_text.value = f"Risk! Attend {needed} in {warning_subject.name}."
+            self.gradient.colors = [ft.Colors.RED_600, ft.Colors.RED_900]
         elif best_bunk_subject:
-             self.status_text.value = f"Relax! Skip {max_bunks} in {best_bunk_subject.name}."
+             self.status_text.value = f"Relax! You can skip {max_bunks} in {best_bunk_subject.name}."
+             self.gradient.colors = ["#3D5CFF", "#2C3E50"]
         else:
             self.status_text.value = "All good. Keep it up!"
+            self.gradient.colors = ["#3D5CFF", "#2C3E50"]
 
 class SubjectCard(ft.Container):
     def __init__(self, subject: Subject, on_click_callback):
         self.subject = subject
         status_color = ft.Colors.GREEN if self.subject.percentage >= 75.0 else ft.Colors.RED
+        
+        # Theme Colors
+        card_bg = get_color("card")
+        text_primary = get_color("text")
+        text_secondary = get_color("text_secondary")
+        
         super().__init__(
             content=ft.Row([
                 ft.Container(width=5, bgcolor=status_color, border_radius=ft.border_radius.only(top_left=12, bottom_left=12)),
                 ft.Container(
                     content=ft.Column([
-                        ft.Row([ft.Text(self.subject.code, size=10, weight=ft.FontWeight.W_900, color=ft.Colors.GREY_500), ft.Container(content=ft.Text(f"{self.subject.percentage:.1f}%", size=24, weight=ft.FontWeight.BOLD, color=status_color), padding=ft.padding.only(right=10))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                        ft.Text(self.subject.name, weight=ft.FontWeight.BOLD, size=16, color=ft.Colors.BLACK87),
-                        ft.Text(self.subject.professor if self.subject.professor else "No Prof Info", size=12, color=ft.Colors.GREY_600),
-                        ft.Text(self.subject.get_bunk_message(), color=ft.Colors.BLUE_GREY, size=12, italic=True)
+                        ft.Row([ft.Text(self.subject.code, size=10, weight=ft.FontWeight.W_900, color=text_secondary), ft.Container(content=ft.Text(f"{self.subject.percentage:.1f}%", size=24, weight=ft.FontWeight.BOLD, color=status_color), padding=ft.padding.only(right=10))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        ft.Text(self.subject.name, weight=ft.FontWeight.BOLD, size=16, color=text_primary),
+                        ft.Text(self.subject.professor if self.subject.professor else "No Prof Info", size=12, color=text_secondary),
+                        ft.Text(self.subject.get_bunk_message(), color=text_secondary, size=12, italic=True)
                     ], spacing=2),
                     padding=10, expand=True
                 )
             ], spacing=0),
-            bgcolor=ft.Colors.WHITE, border_radius=12, shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12, offset=ft.Offset(0, 2)),
+            bgcolor=card_bg, border_radius=12, shadow=ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK12, offset=ft.Offset(0, 2)),
             margin=ft.margin.only(bottom=10), on_click=lambda e: on_click_callback(self.subject), ink=True
         )
 
@@ -144,11 +170,12 @@ class SlotSelector(ft.Container):
         header_row = ft.Row([ft.Container(width=50)] + [ft.Container(content=ft.Text(d[:3], weight=ft.FontWeight.BOLD, size=12), width=40, alignment=ft.alignment.center) for d in DAYS])
         
         rows = [header_row]
+        rows = [header_row]
         for time_label, time_val in GRID_TIME_SLOTS:
             row_ctls = [ft.Container(content=ft.Text(time_label, size=10), width=50, alignment=ft.alignment.center_right, padding=5)]
             for day in DAYS:
                 btn = ft.Container(
-                    width=40, height=30, bgcolor=ft.Colors.GREY_100, border_radius=4,
+                    width=40, height=30, bgcolor=get_color("slot_bg"), border_radius=4,
                     on_click=lambda e, d=day, t=time_val: self.toggle_slot(e, d, t),
                     data={"day": day, "time": time_val},
                     animate=ft.Animation(200, "easeOut"),
@@ -229,33 +256,33 @@ class WeeklyVisualGrid(ft.Container):
         # Build Grid - Dual Header Logic
         
         # 1. Theory Header
-        th_header_ctls = [ft.Container(width=60, content=ft.Text("Theory", size=10, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY), alignment=ft.alignment.center_left, padding=ft.padding.only(left=5))]
+        th_header_ctls = [ft.Container(width=60, content=ft.Text("Theory", size=10, weight=ft.FontWeight.BOLD, color=get_color("text_secondary")), alignment=ft.alignment.center_left, padding=ft.padding.only(left=5))]
         for col in VISUAL_COLS:
             # Extract start time from string "09:00 - 09:50 (Theory)" -> "09:00"
             t_str = col["t"].split(' ')[0] if col["t"] else "-"
-            th_header_ctls.append(ft.Container(width=60, content=ft.Text(t_str, size=9, weight=ft.FontWeight.BOLD), alignment=ft.alignment.center))
+            th_header_ctls.append(ft.Container(width=60, content=ft.Text(t_str, size=9, weight=ft.FontWeight.BOLD, color=get_color("text")), alignment=ft.alignment.center))
             
         # 2. Lab Header
-        lb_header_ctls = [ft.Container(width=60, content=ft.Text("Lab", size=10, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY), alignment=ft.alignment.center_left, padding=ft.padding.only(left=5))]
+        lb_header_ctls = [ft.Container(width=60, content=ft.Text("Lab", size=10, weight=ft.FontWeight.BOLD, color=get_color("text_secondary")), alignment=ft.alignment.center_left, padding=ft.padding.only(left=5))]
         for col in VISUAL_COLS:
             l_str = col["l"].split(' ')[0] if col["l"] else "-"
-            lb_header_ctls.append(ft.Container(width=60, content=ft.Text(l_str, size=9, weight=ft.FontWeight.BOLD), alignment=ft.alignment.center))
+            lb_header_ctls.append(ft.Container(width=60, content=ft.Text(l_str, size=9, weight=ft.FontWeight.BOLD, color=get_color("text")), alignment=ft.alignment.center))
 
         rows = [
             ft.Row(th_header_ctls, spacing=2),
             ft.Row(lb_header_ctls, spacing=2),
-            ft.Container(height=1, bgcolor=ft.Colors.GREY_300, margin=ft.margin.symmetric(vertical=5)) # Separator
+            ft.Container(height=1, bgcolor=get_color("divider"), margin=ft.margin.symmetric(vertical=5)) # Separator
         ]
 
         for day in DAYS:
             # Theory Row
-            t_row_ctls = [ft.Container(width=60, content=ft.Text(f"{day[:3]} Th", size=10, weight=ft.FontWeight.BOLD))]
+            t_row_ctls = [ft.Container(width=60, content=ft.Text(f"{day[:3]} Th", size=10, weight=ft.FontWeight.BOLD, color=get_color("text")))]
             for col in VISUAL_COLS:
                 time_val = col["t"]
                 code = self.schedule_map.get(f"{day}_{time_val}") if time_val else None
                 
                 is_occupied = code is not None
-                bg = "#3D5CFF" if is_occupied else ft.Colors.GREY_100
+                bg = "#3D5CFF" if is_occupied else get_color("slot_bg")
                 txt_col = ft.Colors.WHITE if is_occupied else ft.Colors.TRANSPARENT
                 txt_val = code if code else "Class"
                 txt = txt_val if is_occupied else ""
@@ -269,13 +296,13 @@ class WeeklyVisualGrid(ft.Container):
             rows.append(ft.Row(t_row_ctls, spacing=2))
 
             # Lab Row
-            l_row_ctls = [ft.Container(width=60, content=ft.Text(f"{day[:3]} Lab", size=10, weight=ft.FontWeight.BOLD))]
+            l_row_ctls = [ft.Container(width=60, content=ft.Text(f"{day[:3]} Lab", size=10, weight=ft.FontWeight.BOLD, color=get_color("text")))]
             for col in VISUAL_COLS:
                 time_val = col["l"]
                 code = self.schedule_map.get(f"{day}_{time_val}") if time_val else None
                 
                 is_occupied = code is not None
-                bg = "#3D5CFF" if is_occupied else ft.Colors.GREY_100
+                bg = "#3D5CFF" if is_occupied else get_color("slot_bg")
                 txt_col = ft.Colors.WHITE if is_occupied else ft.Colors.TRANSPARENT
                 txt_val = code if code else "Class"
                 txt = txt_val if is_occupied else ""
@@ -288,9 +315,9 @@ class WeeklyVisualGrid(ft.Container):
                     )
             rows.append(ft.Row(l_row_ctls, spacing=2))
             
-            rows.append(ft.Container(height=1, bgcolor=ft.Colors.GREY_200))
+            rows.append(ft.Container(height=1, bgcolor=get_color("divider")))
             
-            rows.append(ft.Container(height=1, bgcolor=ft.Colors.GREY_200))
+            rows.append(ft.Container(height=1, bgcolor=get_color("divider")))
 
         super().__init__(
             content=ft.Column(rows, scroll=ft.ScrollMode.AUTO),
@@ -302,14 +329,29 @@ class WeeklyVisualGrid(ft.Container):
 # --- Main App ---
 
 def main(page: ft.Page):
-    page.title = "Bunkinator 5000"
+    page.title = "Doofenshmirtz's Bunkinator 5000"
     page.bgcolor = "#F5F7FA"
     page.padding = 0
     page.window_width = 390
     page.window_height = 844
     
-    # Custom Scrollbar Theme
-    # Custom Scrollbar Theme
+    # --- Theme Logic ---
+    global IS_DARK_MODE
+    theme_store = page.client_storage.get("theme_mode")
+    if theme_store == "dark":
+        IS_DARK_MODE = True
+        page.theme_mode = ft.ThemeMode.DARK
+    else:
+        IS_DARK_MODE = False
+        page.theme_mode = ft.ThemeMode.LIGHT
+    
+    def toggle_theme(e):
+        global IS_DARK_MODE
+        IS_DARK_MODE = not IS_DARK_MODE
+        page.theme_mode = ft.ThemeMode.DARK if IS_DARK_MODE else ft.ThemeMode.LIGHT
+        page.client_storage.set("theme_mode", "dark" if IS_DARK_MODE else "light")
+        refresh_all_views()
+
     page.theme = ft.Theme(
         scrollbar_theme=ft.ScrollbarTheme(
             thumb_visibility=True,
@@ -521,16 +563,16 @@ def main(page: ft.Page):
                 today_classes_ctls.append(
                     ft.Container(
                         content=ft.Column([
-                            ft.Text(time_short, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
-                            ft.Text(sub.code, size=12, color=ft.Colors.BLACK),
-                            ft.Text(sub.name, size=12, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS, color=ft.Colors.BLACK),
+                            ft.Text(time_short, weight=ft.FontWeight.BOLD, color=get_color("text")),
+                            ft.Text(sub.code, size=12, color=get_color("text")),
+                            ft.Text(sub.name, size=12, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS, color=get_color("text")),
                         ], spacing=2),
-                        bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, width=160, height=110,
+                        bgcolor=get_color("card"), padding=10, border_radius=10, width=160, height=110,
                         shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK12)
                     )
                 )
         
-        today_disp.controls = [ft.Text("No classes today! 🎉", color=ft.Colors.GREY_700)] if not today_classes_ctls else [ft.Row(today_classes_ctls, scroll=ft.ScrollMode.AUTO)]
+        today_disp.controls = [ft.Text("No classes today! 🎉", color=get_color("text_secondary"))] if not today_classes_ctls else [ft.Row(today_classes_ctls, scroll=ft.ScrollMode.AUTO)]
 
         all_assigns = []
         for s in subjects:
@@ -552,16 +594,16 @@ def main(page: ft.Page):
             for sub, a in all_assigns:
                 # Check for overdue
                 is_overdue = a['deadline'] < today_str
-                title_color = ft.Colors.RED if is_overdue else ft.Colors.BLACK
+                title_color = ft.Colors.RED if is_overdue else get_color("text")
                 
                 upcoming_disp.controls.append(
                     ft.Container(
                         content=ft.Row([
                             ft.Icon(ft.Icons.ASSIGNMENT, color=ft.Colors.ORANGE),
-                            ft.Column([ft.Text(a["title"], weight=ft.FontWeight.BOLD, color=title_color), ft.Text(f"{sub.name} • {a['deadline']}", size=12, color=ft.Colors.BLACK)]),
+                            ft.Column([ft.Text(a["title"], weight=ft.FontWeight.BOLD, color=title_color), ft.Text(f"{sub.name} • {a['deadline']}", size=12, color=get_color("text_secondary"))]),
                             ft.IconButton(icon=ft.Icons.CHECK_CIRCLE_OUTLINE, icon_color="#3a58e8", on_click=lambda e, s=sub, assign=a: complete_assignment(e, s, assign))
                         ]),
-                        bgcolor=ft.Colors.WHITE, padding=10, border_radius=10, margin=ft.margin.only(bottom=5),
+                        bgcolor=get_color("card"), padding=10, border_radius=10, margin=ft.margin.only(bottom=5),
                         animate_opacity=300, # Animation duration for opacity
                     )
                 )
@@ -571,9 +613,9 @@ def main(page: ft.Page):
             content=ft.Column(
                 controls=[
                     hero_card,
-                    ft.Text("Today's Classes", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+                    ft.Text("Today's Classes", size=18, weight=ft.FontWeight.BOLD, color=get_color("text")),
                     today_disp,
-                    upcoming_header,
+                    ft.Text("Upcoming Work", size=18, weight=ft.FontWeight.BOLD, color=get_color("text")),
                     upcoming_disp
                 ],
                 scroll=ft.ScrollMode.AUTO
@@ -605,12 +647,12 @@ def main(page: ft.Page):
         tabs=[ft.Tab(text=d[:3]) for d in DAYS], 
         on_change=lambda e: update_tt_grid(),
         label_color="#3a58e8",
-        unselected_label_color=ft.Colors.BLACK,
+        unselected_label_color=get_color("text"),
         indicator_color="#3a58e8"
     )
     
     tt_action_row = ft.Row([
-        ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+        ft.Text("Weekly Schedule", size=24, weight=ft.FontWeight.BOLD, color=get_color("text")),
         ft.Container(
             content=ft.Row([
                 ft.Icon(ft.Icons.GRID_VIEW, color="#3a58e8", size=30),
@@ -643,11 +685,11 @@ def main(page: ft.Page):
                 tt_list.controls.append(
                     ft.Container(
                         content=ft.Row([
-                            ft.Text(time.split(' ')[0], weight=ft.FontWeight.BOLD, width=50, color=ft.Colors.BLACK),
-                            ft.VerticalDivider(width=10, color=ft.Colors.GREY_300),
-                            ft.Column([ft.Text(sub.name, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK), ft.Text(f"{sub.code} • {sub.professor}", size=12, color=ft.Colors.GREY)])
+                            ft.Text(time.split(' ')[0], weight=ft.FontWeight.BOLD, width=50, color=get_color("text")),
+                            ft.VerticalDivider(width=10, color=get_color("divider")),
+                            ft.Column([ft.Text(sub.name, weight=ft.FontWeight.BOLD, color=get_color("text")), ft.Text(f"{sub.code} • {sub.professor}", size=12, color=get_color("text_secondary"))])
                         ]),
-                        bgcolor=ft.Colors.WHITE, padding=15, border_radius=10, margin=ft.margin.only(bottom=10),
+                        bgcolor=get_color("card"), padding=15, border_radius=10, margin=ft.margin.only(bottom=10),
                         shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK12)
                     )
                 )
@@ -670,7 +712,7 @@ def main(page: ft.Page):
         sub_list_col.controls = [SubjectCard(s, open_edit) for s in subjects]
         return ft.Container(
             content=ft.Column([
-                ft.Text("All Subjects", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+                ft.Text("All Subjects", size=24, weight=ft.FontWeight.BOLD, color=get_color("text")),
                 sub_list_col
             ]),
             padding=20, expand=True
@@ -678,12 +720,32 @@ def main(page: ft.Page):
 
     # --- NAVIGATION ---
     
+    
+    # --- APP BAR ---
+    page.appbar = ft.AppBar(
+        title=ft.Text("Doofenshmirtz's Bunkinator 5000", color=ft.Colors.WHITE, size=18, weight=ft.FontWeight.BOLD),
+        center_title=True,
+        bgcolor="#3D5CFF",
+        actions=[
+            ft.IconButton(ft.Icons.WB_SUNNY, on_click=toggle_theme, icon_color=ft.Colors.WHITE) 
+        ]
+    )
+
     body = ft.Container(expand=True)
     
     fab_add_subject = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: page.open(add_dialog), bgcolor="#3D5CFF", foreground_color=ft.Colors.WHITE)
     fab_add_assign = ft.FloatingActionButton(icon=ft.Icons.ADD_TASK, on_click=open_assign_dialog, bgcolor=ft.Colors.ORANGE, foreground_color=ft.Colors.WHITE)
 
     def refresh_all_views():
+        # Update Theme
+        page.bgcolor = get_color("bg")
+        page.appbar.actions[0].icon = ft.Icons.DARK_MODE if not IS_DARK_MODE else ft.Icons.LIGHT_MODE
+        
+        # Update persistent widget colors
+        hero_card.shadow.color = get_color("shadow")
+        tt_action_row.controls[0].color = get_color("text")
+        tt_tabs.unselected_label_color = get_color("text")
+        
         if nav.selected_index == 0:
             body.content = build_home_view()
             page.floating_action_button = fab_add_assign
@@ -717,7 +779,7 @@ def main(page: ft.Page):
     # --- DISCLAIMER DIALOG ---
     disclaimer_dialog = ft.AlertDialog(
         title=ft.Text("Welcome to Bunkinator", weight=ft.FontWeight.BOLD, color="#3a58e8"),
-        bgcolor=ft.Colors.WHITE,
+        bgcolor=get_color("card"),
         content=ft.Column([
             ft.Text("• Bunking is injurious to the degree", color=ft.Colors.RED_400, weight=ft.FontWeight.BOLD),
             ft.Text("• None of the developers in the club promote or support bunking", color=ft.Colors.RED_400, weight=ft.FontWeight.BOLD),
